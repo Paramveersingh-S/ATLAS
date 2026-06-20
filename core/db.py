@@ -45,9 +45,21 @@ def get_chunks_by_ids(chunk_ids: List[str]) -> Dict[str, str]:
         return {}
     conn = get_db_connection()
     try:
-        placeholders = ','.join('?' * len(chunk_ids))
-        cursor = conn.execute(f"SELECT chunk_id, text_content FROM chunks WHERE chunk_id IN ({placeholders})", chunk_ids)
-        return {row['chunk_id']: row['text_content'] for row in cursor.fetchall()}
+        # Vector index truncates chunk_ids to 16 bytes.
+        # We need to match these 16-byte prefixes against the full IDs in SQLite.
+        conditions = " OR ".join(["chunk_id LIKE ?"] * len(chunk_ids))
+        params = [cid + '%' for cid in chunk_ids]
+        cursor = conn.execute(f"SELECT chunk_id, text_content FROM chunks WHERE {conditions}", params)
+        
+        # Map back the full chunk_id to the 16-byte prefix requested
+        result = {}
+        for row in cursor.fetchall():
+            full_id = row['chunk_id']
+            text = row['text_content']
+            for prefix in chunk_ids:
+                if full_id.startswith(prefix):
+                    result[prefix] = text
+        return result
     finally:
         conn.close()
 
