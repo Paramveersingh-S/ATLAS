@@ -76,6 +76,15 @@ graph TD
 - **Real-Time Streaming Interface**: Sub-millisecond TTFT (Time To First Token) via SSE (Server-Sent Events) integrated into a modern Next.js + Tailwind UI.
 - **Privacy First**: Fully local, air-gapped capable processing utilizing `sentence-transformers` and `vLLM` hooks.
 
+## 🏆 Our Achievement vs. TurboQuant Paper
+
+While the original research paper *"TurboQuant: Online Vector Quantization with Near-optimal Distortion Rate"* provided the mathematical foundation for Polar Quantization (PQ) and Quantized Johnson-Lindenstrauss (QJL) sketching, **ATLAS** takes this theoretical framework and engineers it into a fully production-ready system:
+
+1. **End-to-End RAG Integration:** We applied the raw quantization algorithms to a fully functional Retrieval-Augmented Generation (RAG) pipeline. ATLAS handles real-world documents (chunking, parsing, deduplication), embeds them, and streams responses instantly.
+2. **Custom Disk Format (`.tqvs`):** The paper focused on in-memory operations. We engineered a proprietary, zero-copy memory-mapped storage format (`.tqvs`) that allows sub-millisecond Maximum Inner Product Search (MIPS) directly from disk, effectively bypassing RAM limitations entirely.
+3. **Interactive UI Configuration:** We surfaced complex mathematical configurations (like adjusting QJL bits and sketch dimensions) into a beautiful, user-friendly React Dashboard, bridging the gap between deep AI research and practical user experience.
+4. **Fault-Tolerant Asynchronous Pipeline:** Instead of a static academic script, ATLAS boasts an asynchronous background ingestion pipeline with Live SSE (Server-Sent Events) progress streaming to the frontend.
+
 ## 🚀 Quick Start (For Users)
 
 ### Prerequisites
