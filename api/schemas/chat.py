@@ -4,6 +4,7 @@ from typing import List, Optional
 class ChatMessage(BaseModel):
     role: str
     content: str
+    id: Optional[str] = None
 
 class ChatSessionCreate(BaseModel):
     user_id: str
@@ -14,5 +15,4 @@ class ChatSessionResponse(BaseModel):
     message_count: int
 
 class ChatRequest(BaseModel):
-    session_id: str
-    message: str
+    messages: List[ChatMessage]
