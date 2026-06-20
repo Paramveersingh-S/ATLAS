@@ -12,7 +12,7 @@ async def lifespan(app: FastAPI):
     bits = int(os.getenv("TQ_BITS", 3))
     
     app.state.tq_precomputed = TurboQuantPrecomputed(d=d, bits=bits)
-    app.state.vector_index = TurboQuantVectorIndex(d=d, bits=bits, index_path="./data/index/")
+    app.state.vector_index = TurboQuantVectorIndex(index_dir="./data/index/", d=d, bits=bits)
     
     class DummyEmbedder:
         def encode(self, text):
