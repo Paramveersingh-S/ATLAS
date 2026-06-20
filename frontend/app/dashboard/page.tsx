@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import StatCard from '@/components/dashboard/StatCard';
 import ActivityFeed from '@/components/dashboard/ActivityFeed';
 import { Database, Zap, HardDrive } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<any>(null);
@@ -58,12 +59,39 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 glass-panel rounded-2xl p-6 flex flex-col items-center justify-center min-h-[300px] border-slate-800">
-            {/* Mock Graph Area */}
-            <div className="text-center">
-              <Zap className="text-slate-700 w-12 h-12 mx-auto mb-4" />
-              <p className="text-slate-500 font-mono text-sm">Query Volume Chart</p>
-              <p className="text-slate-600 text-xs mt-2">Awaiting sufficient live traffic data...</p>
+          <div className="lg:col-span-2 glass-panel rounded-2xl p-6 flex flex-col min-h-[300px] border-slate-800">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-slate-200 font-semibold flex items-center gap-2">
+                <Zap className="text-[#00E5FF]" size={18} />
+                Live Query Volume
+              </h3>
+              <div className="flex gap-4 text-xs font-mono">
+                <span className="flex items-center gap-1 text-slate-400">
+                  <div className="w-2 h-2 rounded-full bg-[#00E5FF]"></div> Queries / Min
+                </span>
+              </div>
+            </div>
+            
+            <div className="flex-1 flex items-end justify-between gap-2 md:gap-4 mt-auto h-48">
+              {[120, 230, 150, 400, 320, 500, 380, 290, 410, 460, 520, 310].map((val, i) => (
+                <div key={i} className="relative flex flex-col justify-end items-center w-full group h-full">
+                  <motion.div 
+                    initial={{ height: 0 }}
+                    animate={{ height: `${(val / 520) * 100}%` }}
+                    transition={{ duration: 0.8, delay: i * 0.05, ease: "easeOut" }}
+                    className="w-full bg-gradient-to-t from-[#00E5FF]/20 to-[#00E5FF]/70 rounded-t-sm transition-colors duration-300 group-hover:to-[#00E5FF]"
+                  ></motion.div>
+                  {/* Tooltip */}
+                  <div className="absolute -top-8 bg-slate-900 border border-slate-700 text-[#00E5FF] text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity font-mono pointer-events-none z-20 shadow-lg">
+                    {val}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-between text-slate-500 text-xs mt-4 font-mono border-t border-slate-800/50 pt-2">
+              <span>-60m</span>
+              <span>-30m</span>
+              <span className="text-[#00E5FF]">Now</span>
             </div>
           </div>
           <div className="lg:col-span-1">
