@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "atlas"
+version = "0.1.0"
+description = "ATLAS - TurboQuant-Powered Infinite-Memory AI Research Assistant"
+authors = [
+    {name = "Paramveersingh-S"}
+]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi==0.115.6",
+    "uvicorn==0.30.6",
+    "vllm==0.4.3",
+    "llama-cpp-python==0.2.79",
+    "sentence-transformers==3.0.1",
+    "torch==2.3.1",
+    "numpy==1.26.4",
+    "scipy==1.13.1",
+    "pymupdf==1.24.5",
+    "python-docx==1.1.2",
+    "playwright==1.44.0",
+    "aiosqlite==0.20.0",
+    "python-jose[cryptography]==3.3.0",
+    "passlib[bcrypt]==1.7.4",
+    "pydantic-settings==2.3.4",
+    "cryptography==42.0.8",
+    "scikit-learn==1.5.0",
+    "datasketch==1.6.4",
+    "nltk==3.8.1"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+]
+
+[project.scripts]
+atlas = "scripts.atlas_cli:cli"
