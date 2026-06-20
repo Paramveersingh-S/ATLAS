@@ -42,7 +42,7 @@ export default function DashboardPage() {
           />
           <StatCard 
             title="Memory Footprint" 
-            value={stats ? `${stats.vector_index.index_size_mb} MB` : "Loading..."} 
+            value={stats ? (stats.vector_index.index_size_mb < 0.01 && stats.vector_index.num_vectors > 0 ? "< 0.01 MB" : `${stats.vector_index.index_size_mb} MB`) : "Loading..."} 
             trend={stats ? `-${stats.vector_index.compression_ratio}x vs FP32` : ""}
             icon={<HardDrive className="text-[#B200FF]" size={24} />} 
             delay={0.2}
