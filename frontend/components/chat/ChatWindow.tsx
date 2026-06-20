@@ -19,30 +19,58 @@ export default function ChatWindow() {
     }
   }, [messages]);
 
-  const handleSendMessage = (content: string) => {
+  const handleSendMessage = async (content: string) => {
     const newUserMsg = { id: Date.now().toString(), role: 'user', content };
     setMessages(prev => [...prev, newUserMsg]);
     setIsLoading(true);
 
-    // Simulate SSE API Streaming
-    setTimeout(() => {
-      const botMsgId = (Date.now() + 1).toString();
-      setMessages(prev => [...prev, { id: botMsgId, role: 'assistant', content: '' }]);
-      
-      const responseText = "I have scanned your memory-mapped `.tqvs` vector space. Based on the **3-bit semantic mappings**, I found 4 related chunks in sub-millisecond time. \n\n```python\n# TurboQuant retrieved this context:\ndef quantize(vector):\n    return compress_to_3_bits(vector)\n```\n\nHow else can I assist your workflow?";
-      let i = 0;
-      
-      const interval = setInterval(() => {
-        setMessages(prev => prev.map(msg => 
-          msg.id === botMsgId ? { ...msg, content: msg.content + responseText.charAt(i) } : msg
-        ));
-        i++;
-        if (i >= responseText.length) {
-          clearInterval(interval);
-          setIsLoading(false);
+    const botMsgId = (Date.now() + 1).toString();
+    setMessages(prev => [...prev, { id: botMsgId, role: 'assistant', content: '' }]);
+
+    try {
+      const response = await fetch('/api/v1/chat/sessions/123/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [...messages, newUserMsg]
+        })
+      });
+
+      if (!response.body) throw new Error("No response body");
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const dataStr = line.slice(6).trim();
+            if (!dataStr) continue;
+            
+            try {
+              const data = JSON.parse(dataStr);
+              if (data.event === 'llm_token') {
+                setMessages(prev => prev.map(msg => 
+                  msg.id === botMsgId ? { ...msg, content: msg.content + data.data.token } : msg
+                ));
+              } else if (data.event === 'done') {
+                setIsLoading(false);
+              }
+            } catch (e) {
+              console.error("Error parsing SSE data", e);
+            }
+          }
         }
-      }, 15); // Fast streaming speed
-    }, 600);
+      }
+    } catch (error) {
+      console.error("Chat error:", error);
+      setIsLoading(false);
+    }
   };
 
   return (

@@ -31,10 +31,11 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="ATLAS API", lifespan=lifespan)
 
 # Import routers after app creation to avoid circular imports if routers need app
-from .routers import documents
+from .routers import documents, chat
 
 @app.get("/")
 def read_root():
     return {"status": "ATLAS Backend is online", "turboquant": "active"}
 
 app.include_router(documents.router, prefix="/api/v1/documents", tags=["documents"])
+app.include_router(chat.router, prefix="/api/v1/chat", tags=["chat"])
