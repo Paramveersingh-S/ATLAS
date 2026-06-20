@@ -69,6 +69,8 @@ class IngestionPipeline:
             await self.emit_progress(doc_id, "done", {"chunk_count": len(chunks)})
             return IngestionResult(job_id=doc_id, status="success")
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             update_document_status(doc_id, "Error", chunk_count=0)
             await self.emit_progress(doc_id, "error", {"message": str(e)})
             return IngestionResult(job_id=doc_id, status="error", error=str(e))
