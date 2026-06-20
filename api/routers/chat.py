@@ -23,8 +23,7 @@ async def chat_stream(id: str, chat_req: ChatRequest, request: Request):
         query_emb = app.state.embedder.encode(query_text)
         
         # 2. Search TurboQuant
-        from vector_engine.search import search_compressed_index
-        results = search_compressed_index(app.state.vector_index.reader, app.state.tq_precomputed, query_emb, top_k=4)
+        results = app.state.vector_index.search(query_emb, k=4)
         
         # 3. Fetch real chunk texts from SQLite
         chunk_ids = [r.chunk_id for r in results]
