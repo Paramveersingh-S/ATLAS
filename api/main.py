@@ -32,4 +32,9 @@ app = FastAPI(title="ATLAS API", lifespan=lifespan)
 
 # Import routers after app creation to avoid circular imports if routers need app
 from .routers import documents
+
+@app.get("/")
+def read_root():
+    return {"status": "ATLAS Backend is online", "turboquant": "active"}
+
 app.include_router(documents.router, prefix="/api/v1/documents", tags=["documents"])
