@@ -41,3 +41,7 @@ dev = [
 
 [project.scripts]
 atlas = "scripts.atlas_cli:cli"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["api*", "core*", "vector_engine*", "kv_engine*", "ingestion*", "scripts*"]
