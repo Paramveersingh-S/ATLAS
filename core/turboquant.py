@@ -29,8 +29,11 @@ class TurboQuantCompressor:
         self.d = d
         self.bits = bits
         
-    def compress(self, x: torch.Tensor, use_qjl: bool = True) -> TurboQuantVector:
+    def compress(self, x, use_qjl: bool = True) -> TurboQuantVector:
         """Compress a single vector x to TurboQuantVector."""
+        if isinstance(x, np.ndarray):
+            x = torch.from_numpy(x).float()
+            
         pq = polarquant_compress(x, self.precomputed, self.bits)
         packed_angles = pack_indices(pq['angle_indices'], self.bits - 1)
         
@@ -50,7 +53,7 @@ class TurboQuantCompressor:
             bits=self.bits
         )
         
-    def decompress(self, tqv: TurboQuantVector) -> torch.Tensor:
+    def decompress(self, tqv: TurboQuantVector) -> np.ndarray:
         """Reconstruct approximate x from TurboQuantVector."""
         unpacked_angles = unpack_indices(tqv.angle_indices, self.d - 1, self.bits - 1)
         pq = {
@@ -60,7 +63,8 @@ class TurboQuantCompressor:
             'd': tqv.d,
             'bits': tqv.bits
         }
-        return polarquant_decompress(pq, self.precomputed, return_normalized=False)
+        recon = polarquant_decompress(pq, self.precomputed, return_normalized=False)
+        return recon.numpy()
         
     def estimate_inner_product(self, query: torch.Tensor, tqv: TurboQuantVector) -> float:
         """Estimate dot(query, x) without full decompression."""
