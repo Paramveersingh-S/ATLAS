@@ -45,7 +45,7 @@ class TurboQuantPrecomputed:
         
         if os.path.exists(cache_path):
             print(f"Loading precomputed TurboQuant tables for d={d}, bits={bits} from {cache_path}")
-            data = torch.load(cache_path)
+            data = torch.load(cache_path, weights_only=False)
         else:
             print(f"Building TurboQuant precomputed tables for d={d}, bits={bits}...")
             data = {
