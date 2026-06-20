@@ -5,9 +5,10 @@ from sentence_transformers import SentenceTransformer
 from typing import List
 
 try:
-    nltk.data.find('tokenizers/punkt_tab')
-except LookupError:
+    nltk.download('punkt', quiet=True)
     nltk.download('punkt_tab', quiet=True)
+except Exception:
+    pass
 
 @dataclass
 class Chunk:
@@ -27,7 +28,12 @@ class SemanticChunker:
         self.breakpoint_threshold = breakpoint_threshold
         
     def chunk(self, text: str, doc_id: str) -> List[Chunk]:
-        sentences = nltk.sent_tokenize(text)
+        try:
+            sentences = nltk.sent_tokenize(text)
+        except Exception:
+            # Safe fallback if NLTK tokenizer fails entirely
+            sentences = [s.strip() + "." for s in text.replace('?', '.').replace('!', '.').split(".") if s.strip()]
+            
         if not sentences: return []
         
         embeddings = self.model.encode(sentences)
