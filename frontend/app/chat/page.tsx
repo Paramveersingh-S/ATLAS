@@ -1,3 +1,9 @@
+import ChatWindow from "@/components/chat/ChatWindow";
+
 export default function ChatPage() {
-  return <div className="p-4">ChatPage component initialized</div>;
+  return (
+    <div className="h-full w-full bg-[#020617]">
+      <ChatWindow />
+    </div>
+  );
 }
