@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Request, BackgroundTasks, UploadFile, File, HTTPException
 from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
 import json
 import asyncio
 import os
 import uuid
 import shutil
-from core.db import insert_document, get_all_documents
+from core.db import insert_document, get_all_documents, get_chunks_by_ids
 
 router = APIRouter()
 
@@ -61,7 +62,6 @@ async def stream_ingestion_progress(job_id: str, request: Request):
                 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
-from pydantic import BaseModel
 class SearchRequest(BaseModel):
     query: str
     top_k: int = 5
@@ -71,10 +71,8 @@ async def search_documents(req: SearchRequest, request: Request):
     app = request.app
     query_emb = app.state.embedder.encode(req.query)
     
-    from vector_engine.search import search_compressed_index
-    from core.db import get_chunks_by_ids
-    
-    results = search_compressed_index(app.state.vector_index.reader, app.state.tq_precomputed, query_emb, top_k=req.top_k)
+    # Use app.state.vector_index.search so it reloads the memory map to find new chunks!
+    results = app.state.vector_index.search(query_emb, k=req.top_k)
     
     chunk_ids = [r.chunk_id for r in results]
     chunk_texts = get_chunks_by_ids(chunk_ids)
