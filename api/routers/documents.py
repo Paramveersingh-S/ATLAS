@@ -75,13 +75,16 @@ async def search_documents(req: SearchRequest, request: Request):
     results = app.state.vector_index.search(query_emb, k=req.top_k)
     
     chunk_ids = [r.chunk_id for r in results]
+    doc_ids = [r.doc_id for r in results]
+    
     chunk_texts = get_chunks_by_ids(chunk_ids)
+    doc_titles = get_doc_titles_by_ids(doc_ids)
     
     chunks = []
     for r in results:
         chunks.append({
             "chunk_id": r.chunk_id, 
-            "doc_id": r.doc_id, 
+            "doc_title": doc_titles.get(r.doc_id, "Unknown Document"), 
             "text": chunk_texts.get(r.chunk_id, "Text not found."), 
             "score": float(r.score)
         })

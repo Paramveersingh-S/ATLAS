@@ -63,6 +63,26 @@ def get_chunks_by_ids(chunk_ids: List[str]) -> Dict[str, str]:
     finally:
         conn.close()
 
+def get_doc_titles_by_ids(doc_ids: List[str]) -> Dict[str, str]:
+    if not doc_ids:
+        return {}
+    conn = get_db_connection()
+    try:
+        conditions = " OR ".join(["id LIKE ?"] * len(doc_ids))
+        params = [did + '%' for did in doc_ids]
+        cursor = conn.execute(f"SELECT id, title FROM documents WHERE {conditions}", params)
+        
+        result = {}
+        for row in cursor.fetchall():
+            full_id = row['id']
+            title = row['title']
+            for prefix in doc_ids:
+                if full_id.startswith(prefix):
+                    result[prefix] = title
+        return result
+    finally:
+        conn.close()
+
 def get_all_documents():
     conn = get_db_connection()
     try:
