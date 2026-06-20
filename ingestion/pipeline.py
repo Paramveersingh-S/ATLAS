@@ -1,5 +1,7 @@
 import asyncio
 from typing import Dict, Any
+import PyPDF2
+from core.db import insert_chunks, update_document_status
 
 class IngestionResult:
     def __init__(self, job_id, status, error=None):
@@ -24,35 +26,49 @@ class IngestionPipeline:
         try:
             await self.emit_progress(doc_id, "parse_start", {"filename": file_path})
             
-            if file_path.endswith('.pdf'):
-                from .parsers.pdf_parser import parse_pdf
-                parsed = parse_pdf(file_path)
+            text = ""
+            pages = 1
+            if file_path.lower().endswith('.pdf'):
+                with open(file_path, "rb") as f:
+                    reader = PyPDF2.PdfReader(f)
+                    pages = len(reader.pages)
+                    for page in reader.pages:
+                        extracted = page.extract_text()
+                        if extracted:
+                            text += extracted + "\n"
             else:
-                # Placeholder for other parsers
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
                     text = f.read()
-                parsed = {"text": text, "metadata": {"page_count": 1}}
+                    
+            if not text.strip():
+                text = "Empty document."
                 
-            await self.emit_progress(doc_id, "parse_done", {"pages": parsed["metadata"].get("page_count", 1)})
+            await self.emit_progress(doc_id, "parse_done", {"pages": pages})
             
             from .chunker import SemanticChunker
             chunker = SemanticChunker("all-MiniLM-L6-v2")
-            chunks = chunker.chunk(parsed["text"], doc_id)
+            chunks = chunker.chunk(text, doc_id)
             await self.emit_progress(doc_id, "chunk_progress", {"total": len(chunks)})
             
-            from .dedup import is_near_duplicate
-            existing_mhs = []
-            
+            db_chunks = []
             for i, chunk in enumerate(chunks):
-                if is_near_duplicate(chunk.text, existing_mhs):
-                    continue
+                db_chunks.append({
+                    "chunk_id": chunk.chunk_id,
+                    "doc_id": doc_id,
+                    "text_content": chunk.text,
+                    "chunk_index": i
+                })
                 
                 emb = self.embedder.encode(chunk.text)
                 self.vector_index.add(emb, chunk.chunk_id, doc_id)
                 await self.emit_progress(doc_id, "embed_progress", {"done": i+1, "total": len(chunks)})
                 
+            insert_chunks(db_chunks)
+            update_document_status(doc_id, "Indexed", chunk_count=len(chunks))
+            
             await self.emit_progress(doc_id, "done", {"chunk_count": len(chunks)})
             return IngestionResult(job_id=doc_id, status="success")
         except Exception as e:
+            update_document_status(doc_id, "Error", chunk_count=0)
             await self.emit_progress(doc_id, "error", {"message": str(e)})
             return IngestionResult(job_id=doc_id, status="error", error=str(e))

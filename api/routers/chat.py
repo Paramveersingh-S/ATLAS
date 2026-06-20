@@ -3,6 +3,7 @@ from fastapi.responses import StreamingResponse
 import asyncio
 import json
 from api.schemas.chat import ChatRequest, ChatSessionCreate
+from core.db import get_chunks_by_ids
 
 router = APIRouter()
 
@@ -25,32 +26,39 @@ async def chat_stream(id: str, chat_req: ChatRequest, request: Request):
         from vector_engine.search import search_compressed_index
         results = search_compressed_index(app.state.vector_index.reader, app.state.tq_precomputed, query_emb, k=4)
         
+        # 3. Fetch real chunk texts from SQLite
+        chunk_ids = [r.chunk_id for r in results]
+        chunk_texts = get_chunks_by_ids(chunk_ids)
+        
         chunks = []
         for r in results:
+            text_preview = chunk_texts.get(r.chunk_id, "Text not found.")[:200] + "..."
             chunks.append({
                 "chunk_id": r.chunk_id, 
                 "doc_title": r.doc_id, 
-                "text_preview": f"Retrieved chunk {r.chunk_id} from {r.doc_id} with score {r.score:.3f}", 
+                "text_preview": text_preview, 
                 "score": float(r.score)
             })
             
         yield f"data: {json.dumps({'event': 'retrieved_chunks', 'data': {'chunks': chunks}})}\n\n"
         await asyncio.sleep(0.5)
         
-        # 3. Simulate LLM streaming an answer based on query and chunks
+        # 4. Stream response (Retrieval-Only mode)
         response = f"I scanned your `.tqvs` vector space for '{query_text}'. Using my mathematical KV cache, I found {len(results)} related chunks in sub-millisecond time!\n\n"
         if results:
-            response += "Here is what I found:\n"
+            response += "Here is the exact text I retrieved from your documents:\n\n"
             for r in results:
-                response += f"- **{r.doc_id}**: Chunk `{r.chunk_id}` (Score: {r.score:.3f})\n"
+                full_text = chunk_texts.get(r.chunk_id, "No text found.")
+                response += f"### From Document: {r.doc_id} (Chunk `{r.chunk_id}`)\n"
+                response += f"> {full_text}\n\n"
         else:
             response += "But I didn't find any indexed chunks. Upload some documents in the Library!"
             
-        response += "\n\nHow else can I assist your workflow?"
+        response += "\nHow else can I assist your workflow?"
         
         for word in response.split(" "):
             yield f"data: {json.dumps({'event': 'llm_token', 'data': {'token': word + ' '}})}\n\n"
-            await asyncio.sleep(0.05)
+            await asyncio.sleep(0.02) # Faster streaming
             
         yield f"data: {json.dumps({'event': 'done', 'data': {'tokens_used': len(response.split()), 'kv_compression_ratio': 5.8}})}\n\n"
         

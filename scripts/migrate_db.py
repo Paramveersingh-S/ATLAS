@@ -2,14 +2,14 @@ import sqlite3
 
 def init_db(db_path: str):
     schema = """
-    CREATE TABLE users (
+    CREATE TABLE IF NOT EXISTS users (
         id TEXT PRIMARY KEY,
         username TEXT UNIQUE NOT NULL,
         password_hash TEXT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         settings_json TEXT DEFAULT '{}'
     );
-    CREATE TABLE documents (
+    CREATE TABLE IF NOT EXISTS documents (
         id TEXT PRIMARY KEY,
         user_id TEXT NOT NULL REFERENCES users(id),
         title TEXT NOT NULL,
@@ -23,6 +23,12 @@ def init_db(db_path: str):
         status TEXT DEFAULT 'ingesting',
         error_message TEXT,
         metadata_json TEXT DEFAULT '{}'
+    );
+    CREATE TABLE IF NOT EXISTS chunks (
+        chunk_id TEXT PRIMARY KEY,
+        doc_id TEXT NOT NULL REFERENCES documents(id),
+        text_content TEXT NOT NULL,
+        chunk_index INTEGER
     );
     """
     import os

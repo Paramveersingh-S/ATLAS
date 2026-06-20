@@ -1,8 +1,28 @@
+'use client';
+import React, { useEffect, useState } from 'react';
 import StatCard from '@/components/dashboard/StatCard';
 import ActivityFeed from '@/components/dashboard/ActivityFeed';
 import { Database, Zap, HardDrive } from 'lucide-react';
 
 export default function DashboardPage() {
+  const [stats, setStats] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await fetch('/api/v1/stats/compression');
+        if (res.ok) {
+          setStats(await res.json());
+        }
+      } catch (e) {
+        console.error("Failed to fetch stats", e);
+      }
+    };
+    fetchStats();
+    const interval = setInterval(fetchStats, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="h-full w-full bg-[#020617] overflow-y-auto p-6 md:p-10 relative">
       <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-[#00E5FF]/5 rounded-full blur-[120px] pointer-events-none"></div>
@@ -16,22 +36,21 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <StatCard 
             title="Total Vectors Indexed" 
-            value="1.8M" 
-            trend="+12k this week"
+            value={stats ? stats.vector_index.num_vectors.toLocaleString() : "Loading..."} 
             icon={<Database className="text-[#00E5FF]" size={24} />} 
             delay={0.1}
           />
           <StatCard 
             title="Memory Footprint" 
-            value="142 MB" 
-            trend="-85% vs FP32"
+            value={stats ? `${stats.vector_index.index_size_mb} MB` : "Loading..."} 
+            trend={stats ? `-${stats.vector_index.compression_ratio}x vs FP32` : ""}
             icon={<HardDrive className="text-[#B200FF]" size={24} />} 
             delay={0.2}
             glowColor="#B200FF"
           />
           <StatCard 
             title="Avg Retrieval Latency" 
-            value="0.8 ms" 
+            value={stats ? `${stats.vector_index.last_index_latency_ms} ms` : "Loading..."} 
             icon={<Zap className="text-amber-400" size={24} />} 
             delay={0.3}
             glowColor="#fbbf24"
