@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://via.placeholder.com/150/000000/FFFFFF?text=ATLAS" alt="ATLAS Logo" width="120" />
+  <img src="assets/atlas_logo.png" alt="ATLAS Logo" width="150" style="border-radius: 20%; margin-bottom: 20px; box-shadow: 0 4px 14px 0 rgba(0,118,255,0.39);" />
   <h1>ATLAS: TurboQuant-Powered Infinite-Memory AI Research Assistant</h1>
 
   <p>
