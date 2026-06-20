@@ -9,7 +9,7 @@ export default function DocumentList() {
 
   const fetchDocs = async () => {
     try {
-      const res = await fetch('/api/v1/documents/');
+      const res = await fetch('/api/v1/documents');
       if (res.ok) {
         const data = await res.json();
         setDocuments(data.documents);

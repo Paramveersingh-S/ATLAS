@@ -34,7 +34,7 @@ async def upload_document(background_tasks: BackgroundTasks, request: Request, f
     
     return {"doc_id": doc_id, "status": "ingesting"}
 
-@router.get("/")
+@router.get("")
 async def list_documents():
     docs = get_all_documents()
     return {"documents": docs}
